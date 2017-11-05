@@ -5,15 +5,21 @@ package com.meetup.diplome.demo.controller;
 import javax.validation.Valid;
 
 import com.meetup.diplome.demo.model.Greeting;
+import com.meetup.diplome.demo.model.Meetup;
 import com.meetup.diplome.demo.model.User;
+import com.meetup.diplome.demo.service.MeetupService;
 import com.meetup.diplome.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+
+import java.util.List;
 
 
 @Controller
@@ -22,6 +28,9 @@ public class LoginController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private MeetupService meetupService;
 
     @RequestMapping(value={"/", "/login"}, method = RequestMethod.GET)
     public ModelAndView login(){
@@ -66,7 +75,7 @@ public class LoginController {
         ModelAndView modelAndView = new ModelAndView();
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = userService.findUserByEmail(auth.getName());
-        modelAndView.addObject("userName", "Welcome " + user.getName() + " " + user.getLastName() + " (" + user.getEmail() + ")");
+        modelAndView.addObject("userName", "Welcome " + " (" + user.getEmail() + ")");
         modelAndView.addObject("adminMessage","Content Available Only for Users with Admin Role");
         modelAndView.setViewName("admin/home");
         return modelAndView;
@@ -76,5 +85,19 @@ public class LoginController {
     public @ResponseBody
     Greeting sayHello(@RequestParam(value = "name", required = false, defaultValue = "Jack" ) String name) {
         return new Greeting(3, name);
+    }
+
+    @RequestMapping(value = "/meetups", method = RequestMethod.GET)
+    public @ResponseBody List<Meetup> getMeetups() {
+        return meetupService.getAllMeetups();
+    }
+
+
+    @RequestMapping(value = "/meetup/new", method = RequestMethod.POST)
+    public ResponseEntity<Meetup> createMeetup(@RequestBody Meetup meetup) {
+        if (meetup != null) {
+            meetupService.saveMeetup(meetup);
+        }
+        return new ResponseEntity<>(meetup, HttpStatus.OK);
     }
 }
